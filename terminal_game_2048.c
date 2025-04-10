@@ -3,15 +3,21 @@
 #include <stdlib.h>
 #include <time.h>
 
-void print_field(int*);
-void generate_new_number(int[]);
-void start(int[]);
-int key_pressed(char key, int[]);
-void rotate(int, int[]);
-int check_game_over(int, int[]);
+typedef struct{
+    unsigned long value;
+    int blocked;
+} number;
+
+void print_field(number*);
+void generate_new_number(number[]);
+void start(number[]);
+int key_pressed(char key, number[]);
+void rotate(int, number[]);
+int check_game_over(int, number[]);
+
 
 int main(){
-    int field[16];
+    number field[16];
     char key; 
 
     //test
@@ -27,7 +33,7 @@ int main(){
     printf("Game over!");
 }
 
-int check_game_over(int change, int field[]){
+int check_game_over(int change, number field[]){
     if(change == 1){
         generate_new_number(field);
         print_field(field);
@@ -36,12 +42,16 @@ int check_game_over(int change, int field[]){
     else{
         for(int k=0; k<4; k++){ // check all four directions
             for(int j=0; j<3; j++){
-                for(int i=15; i>3; i--){
-                    if(field[i] != 0 && field[i-4] == 0){
-                        change = 1;
-                    }
-                    if(field[i] != 0 && field[i-4] == field[i]){
-                        change = 1;
+                for(int i=4; i<16; i++){
+                    if(field[i].value != 0){
+                        if(field[i-4].value == 0){
+                            change = 1;
+                        }
+                        else{
+                            if(field[i-4].value == field[i].value && field[i-4].blocked == 0){
+                                change = 1;
+                            }
+                        }
                     }
                 }
             }
@@ -58,7 +68,7 @@ int check_game_over(int change, int field[]){
     }
 }
 
-int key_pressed(char key, int field[]){
+int key_pressed(char key, number field[]){
     int change = 0;
     int n=0;
     switch (key) {
@@ -68,17 +78,28 @@ int key_pressed(char key, int field[]){
         case 'd': n=1; break;
     }
     rotate(n, field);
+    for(int i=0; i<16; i++){
+        field[i].blocked = 0;
+    }
     for(int j=0; j<3; j++){
-        for(int i=15; i>3; i--){
-            if(field[i] != 0 && field[i-4] == 0){
-                field[i-4] = field[i];
-                field[i] = 0;
-                change = 1;
-            }
-            if(field[i] != 0 && field[i-4] == field[i]){
-                field[i-4] = 2*field[i];
-                field[i] = 0;
-                change = 1;
+        for(int i=4; i<16; i++){
+            if(field[i].value != 0){
+                if(field[i-4].value == 0){
+                    field[i-4].value = field[i].value;
+                    field[i].value = 0;
+                    change = 1;
+                }
+                else{
+                    if(field[i-4].value == field[i].value && field[i-4].blocked == 0){
+                        field[i-4].value = 2*field[i].value;
+                        field[i-4].blocked = 1;
+                        field[i].value = 0;
+                        change = 1;
+                    }
+                    else {
+                        field[i-4].blocked = 1;
+                    }
+                }
             }
         }
     }
@@ -86,16 +107,16 @@ int key_pressed(char key, int field[]){
     return change;
 }
 
-void rotate(int n, int field[]){    // rotate field n*90° counter clockwise
+void rotate(int n, number field[]){    // rotate field n*90° counter clockwise
     n = n%4;
     if(n > 0){
-        int field_copy[16];
+        number field_copy[16];
         for(int i=0; i<16; i++){
-            field_copy[i] = field[i];
+            field_copy[i]= field[i];
         }
         for(int i=0; i<4; i++){
             for(int j=0; j<4; j++){
-                field[4*i+j] = field_copy[(3-i)%4+4*j];
+                field[4*i+j]= field_copy[(3-i)%4+4*j];
             }
         }    
         --n;   
@@ -103,33 +124,34 @@ void rotate(int n, int field[]){    // rotate field n*90° counter clockwise
     }
 }
 
-void start(int field[]){
+void start(number field[]){
     for(int i=0; i<16; i++){
-        field[i] = 0;
+        field[i].value = 0;
+        field[i].blocked = 0;
     }
     generate_new_number(field);
     generate_new_number(field);
 }
 
-void print_field(int* field){
+void print_field(number* field){
     for(int i=0; i<=12; i+=4){
         printf("---------------------\n");
-        printf("|%4d|%4d|%4d|%4d|\n", field[i], field[i+1], field[i+2], field[i+3]);
+        printf("|%4lu|%4lu|%4lu|%4lu|\n", field[i].value, field[i+1].value, field[i+2].value, field[i+3].value);
     }
     printf("---------------------\n");
 }
 
-void generate_new_number(int field[]){
+void generate_new_number(number field[]){
     int full = 1;
     for(int i=0; i<16; i++){
-        if(field[i]==0){full=0;}    // still 0 left
+        if(field[i].value==0){full=0;}    // still 0 left
     }
     if(full==0){
         int n[] = {2,2,2,2,2,2,2,2,2,4};    // 90% probability for 2, 10% for 4
         int position;
         do{
             position = rand()%16;
-        }while(field[position] != 0);   // dont replace existing number
-        field[position] = n[rand()%10];
+        }while(field[position].value != 0);   // dont replace existing number
+        field[position].value = n[rand()%10];
     }
 }
