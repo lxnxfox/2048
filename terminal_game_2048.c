@@ -22,7 +22,6 @@ int main(){
     int game_over = 0;
     while(game_over == 0){
         scanf(" %c", &key);
-        //key_pressed(key, field);
         game_over = check_game_over(key_pressed(key, field), field);
     }
     printf("Game over!");
@@ -35,7 +34,27 @@ int check_game_over(int change, int field[]){
         return 0;
     }
     else{
-        return 1;
+        for(int k=0; k<4; k++){ // check all four directions
+            for(int j=0; j<3; j++){
+                for(int i=15; i>3; i--){
+                    if(field[i] != 0 && field[i-4] == 0){
+                        change = 1;
+                    }
+                    if(field[i] != 0 && field[i-4] == field[i]){
+                        change = 1;
+                    }
+                }
+            }
+            rotate(1, field);
+        }
+        if(change == 1){    // a move is possible
+            generate_new_number(field);
+            print_field(field);
+            return 0;
+        } 
+        else{
+            return 1;
+        }
     }
 }
 
@@ -50,7 +69,7 @@ int key_pressed(char key, int field[]){
     }
     rotate(n, field);
     for(int j=0; j<3; j++){
-        for(int i=4; i<16; i++){
+        for(int i=15; i>3; i--){
             if(field[i] != 0 && field[i-4] == 0){
                 field[i-4] = field[i];
                 field[i] = 0;
@@ -101,10 +120,16 @@ void print_field(int* field){
 }
 
 void generate_new_number(int field[]){
-    int n[] = {2,2,2,2,2,2,2,2,2,4};    // 90% probability for 2, 10% for 4
-    int position;
-    do{
-        position = rand()%16;
-    }while(field[position] != 0);   // dont replace existing number
-    field[position] = n[rand()%10];
+    int full = 1;
+    for(int i=0; i<16; i++){
+        if(field[i]==0){full=0;}    // still 0 left
+    }
+    if(full==0){
+        int n[] = {2,2,2,2,2,2,2,2,2,4};    // 90% probability for 2, 10% for 4
+        int position;
+        do{
+            position = rand()%16;
+        }while(field[position] != 0);   // dont replace existing number
+        field[position] = n[rand()%10];
+    }
 }
