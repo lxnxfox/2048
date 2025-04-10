@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -5,7 +6,9 @@
 void print_field(int*);
 void generate_new_number(int[]);
 void start(int[]);
-void key_pressed(char key, int[]);
+int key_pressed(char key, int[]);
+void rotate(int, int[]);
+int check_game_over(int, int[]);
 
 int main(){
     int field[16];
@@ -17,35 +20,68 @@ int main(){
     print_field(field);
 
     int game_over = 0;
-    while(!game_over){
+    while(game_over == 0){
         scanf(" %c", &key);
-        key_pressed(key, field);
-        //game_over = check_game_over();    TODO
+        //key_pressed(key, field);
+        game_over = check_game_over(key_pressed(key, field), field);
+    }
+    printf("Game over!");
+}
+
+int check_game_over(int change, int field[]){
+    if(change == 1){
+        generate_new_number(field);
+        print_field(field);
+        return 0;
+    }
+    else{
+        return 1;
     }
 }
 
-void key_pressed(char key, int field[]){
+int key_pressed(char key, int field[]){
     int change = 0;
-    if(key == 'w'){
-        for(int j=0; j<3; j++){
-            for(int i=4; i<16; i++){
-                if(field[i] != 0 && field[i-4] == 0){
-                    field[i-4] = field[i];
-                    field[i] = 0;
-                    change = 1;
-                }
-                if(field[i] != 0 && field[i-4] == field[i]){
-                    field[i-4] = 2*field[i];
-                    field[i] = 0;
-                    change = 1;
-                }
+    int n=0;
+    switch (key) {
+        case 'w': n=0; break;
+        case 'a': n=3; break;
+        case 's': n=2; break;
+        case 'd': n=1; break;
+    }
+    rotate(n, field);
+    for(int j=0; j<3; j++){
+        for(int i=4; i<16; i++){
+            if(field[i] != 0 && field[i-4] == 0){
+                field[i-4] = field[i];
+                field[i] = 0;
+                change = 1;
+            }
+            if(field[i] != 0 && field[i-4] == field[i]){
+                field[i-4] = 2*field[i];
+                field[i] = 0;
+                change = 1;
             }
         }
     }
-    if(change == 1){
-        generate_new_number(field);
+    rotate(4-n, field);
+    return change;
+}
+
+void rotate(int n, int field[]){    // rotate field n*90° counter clockwise
+    n = n%4;
+    if(n > 0){
+        int field_copy[16];
+        for(int i=0; i<16; i++){
+            field_copy[i] = field[i];
+        }
+        for(int i=0; i<4; i++){
+            for(int j=0; j<4; j++){
+                field[4*i+j] = field_copy[(3-i)%4+4*j];
+            }
+        }    
+        --n;   
+        rotate(n, field);
     }
-    print_field(field);
 }
 
 void start(int field[]){
@@ -65,10 +101,10 @@ void print_field(int* field){
 }
 
 void generate_new_number(int field[]){
-    int n[] = {2,2,2,2,2,2,2,2,2,4};
+    int n[] = {2,2,2,2,2,2,2,2,2,4};    // 90% probability for 2, 10% for 4
     int position;
     do{
         position = rand()%16;
-    }while(field[position] != 0);
+    }while(field[position] != 0);   // dont replace existing number
     field[position] = n[rand()%10];
 }
