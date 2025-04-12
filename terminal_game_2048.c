@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -6,6 +5,7 @@
 typedef struct{
     unsigned long value;
     int blocked;
+    char* color;
 } number;
 
 void print_field(number*);
@@ -14,6 +14,7 @@ void start(number[]);
 int key_pressed(char key, number[]);
 void rotate(int, number[]);
 int check_game_over(int, number[]);
+void update_color(number[]);
 
 
 int main(){
@@ -30,7 +31,7 @@ int main(){
         scanf(" %c", &key);
         game_over = check_game_over(key_pressed(key, field), field);
     }
-    printf("Game over!");
+    printf("Game over!\n");
 }
 
 int check_game_over(int change, number field[]){
@@ -134,9 +135,11 @@ void start(number field[]){
 }
 
 void print_field(number* field){
+    update_color(field);
+    const char *reset = "\033[0m";
     for(int i=0; i<=12; i+=4){
         printf("---------------------\n");
-        printf("|%4lu|%4lu|%4lu|%4lu|\n", field[i].value, field[i+1].value, field[i+2].value, field[i+3].value);
+        printf("|%s%4lu%s|%s%4lu%s|%s%4lu%s|%s%4lu%s|\n", field[i].color, field[i].value, reset, field[i+1].color, field[i+1].value, reset, field[i+2].color, field[i+2].value, reset, field[i+3].color, field[i+3].value, reset);
     }
     printf("---------------------\n");
 }
@@ -153,5 +156,27 @@ void generate_new_number(number field[]){
             position = rand()%16;
         }while(field[position].value != 0);   // dont replace existing number
         field[position].value = n[rand()%10];
+    }
+}
+
+void update_color(number field[]){
+    for(int i=0; i<16; i++){
+        switch (field[i].value) {
+            case 0: field[i].color= "\033[0;90m"; break;    // bright_black (grey)
+            case 2: field[i].color= "\033[0;32m"; break;    // green
+            case 4: field[i].color= "\033[0;31m"; break;    // red
+            case 8: field[i].color= "\033[0;33m"; break;    // yellow
+            case 16: field[i].color= "\033[0;34m"; break;    // blue
+            case 32: field[i].color= "\033[0;35m"; break;    // magenta
+            case 64: field[i].color= "\033[0;36m"; break;    // cyan
+            case 128: field[i].color= "\033[0;91m"; break;    // bright_red
+            case 256: field[i].color= "\033[0;92m"; break;    // bright_green
+            case 512: field[i].color= "\033[0;93m"; break;    // bright_yellow
+            case 1024: field[i].color= "\033[0;94m"; break;    // bright_blue
+            case 2048: field[i].color= "\033[0;95m"; break;    // bright_magenta
+            case 4096: field[i].color= "\033[0;96m"; break;    // bright_cyan
+            default: field[i].color="\033[0;37m"; break;    // white
+        
+        }
     }
 }
